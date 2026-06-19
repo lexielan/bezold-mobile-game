@@ -77,7 +77,7 @@ function render() {
 
   if (room.target) {
     $("targetSwatch").style.background = rgbCss(room.target);
-    $("targetText").textContent = rgbText(room.target);
+    $("targetText").textContent = "請選擇最接近的顏色";
   }
 
   renderStatus(room);
