@@ -1,0 +1,69 @@
+
+/**
+ * Google Apps Script
+ * 使用方式：
+ * 1. 建立 Google Sheet
+ * 2. 擴充功能 → Apps Script
+ * 3. 貼上這份程式
+ * 4. 部署 → 新增部署作業 → 網頁應用程式
+ * 5. 執行身分：我
+ * 6. 存取權：任何人
+ * 7. 複製 Web App URL
+ * 8. 到 Render → Environment → 新增：
+ *    GOOGLE_SHEET_WEBHOOK = 你的 Web App URL
+ */
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var payload = JSON.parse(e.postData.contents);
+  var rows = payload.rows || [];
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      "createdAt",
+      "roomCode",
+      "finalWinner",
+      "finalScoreA",
+      "finalScoreB",
+      "round",
+      "playerSlot",
+      "playerName",
+      "targetRGB",
+      "selectedRGB",
+      "cardBaseRGB",
+      "cardStripeRGB",
+      "distance",
+      "usedTricks",
+      "selectedSecondsLeft",
+      "roundWinner",
+      "roundText",
+      "timeout"
+    ]);
+  }
+
+  rows.forEach(function(row) {
+    sheet.appendRow([
+      row.createdAt,
+      row.roomCode,
+      row.finalWinner,
+      row.finalScoreA,
+      row.finalScoreB,
+      row.round,
+      row.playerSlot,
+      row.playerName,
+      row.targetRGB,
+      row.selectedRGB,
+      row.cardBaseRGB,
+      row.cardStripeRGB,
+      row.distance,
+      row.usedTricks,
+      row.selectedSecondsLeft,
+      row.roundWinner,
+      row.roundText,
+      row.timeout
+    ]);
+  });
+
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}

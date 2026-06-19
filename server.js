@@ -9,6 +9,12 @@ app.use(express.static("public"));
 const rooms = {};
 const MAX_ROUNDS = 5;
 const ROUND_SECONDS = 60;
+const COUNTDOWN_SECONDS = 3;
+
+// Google Sheet Apps Script Web App URL.
+// 在 Render 後台 Environment Variables 新增：
+// GOOGLE_SHEET_WEBHOOK = 你的 Apps Script Web App URL
+const GOOGLE_SHEET_WEBHOOK = process.env.GOOGLE_SHEET_WEBHOOK || "";
 
 const targetPool = [
   [255, 0, 0],
@@ -32,32 +38,20 @@ const cardPool = [
   { name:"焦糖紅", center:[220,60,20], base:[255,225,40], stripe:[30,20,20] }
 ];
 
-function clone(x) {
-  return JSON.parse(JSON.stringify(x));
-}
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+function pick(arr){ return clone(arr[Math.floor(Math.random() * arr.length)]); }
+function makeId(){ return Math.random().toString(36).slice(2, 10); }
 
-function pick(arr) {
-  return clone(arr[Math.floor(Math.random() * arr.length)]);
-}
-
-function makeId() {
-  return Math.random().toString(36).slice(2, 10);
-}
-
-function makeCode() {
+function makeCode(){
   let result = "";
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  for (let i = 0; i < 4; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
+  for (let i = 0; i < 4; i++) result += chars[Math.floor(Math.random() * chars.length)];
   return result;
 }
 
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
+function shuffle(arr){ return arr.sort(() => Math.random() - 0.5); }
 
-function rgbDistance(a, b) {
+function rgbDistance(a, b){
   return Math.sqrt(
     Math.pow(a[0] - b[0], 2) +
     Math.pow(a[1] - b[1], 2) +
@@ -65,28 +59,33 @@ function rgbDistance(a, b) {
   );
 }
 
-function makeHand() {
-  const hand = [];
+function makeSharedHandTemplate(){
+  const normalCards = [];
   for (let i = 0; i < 4; i++) {
-    hand.push({ ...pick(cardPool), id: makeId(), type: "normal", lineMode: "normal", trickEffect: null });
+    normalCards.push({ ...pick(cardPool), id: makeId(), type: "normal", lineMode: "normal", trickEffect: null });
   }
 
-  hand.push({ id: makeId(), type: "trick", effect: "reverse", name: "背景反轉" });
-  hand.push({ id: makeId(), type: "trick", effect: "thin", name: "條紋變細" });
-  hand.push({ id: makeId(), type: "trick", effect: "contrast", name: "對比強化" });
+  const trickCards = [
+    { id: makeId(), type: "trick", effect: "reverse", name: "背景反轉" },
+    { id: makeId(), type: "trick", effect: "thin", name: "條紋變細" },
+    { id: makeId(), type: "trick", effect: "contrast", name: "對比強化" }
+  ];
 
-  return shuffle(hand);
+  // 普通牌可以洗牌；功能牌固定放最後，位置一致
+  return [...shuffle(normalCards), ...trickCards];
 }
 
-function publicRoom(room) {
+function publicRoom(room){
   return {
     code: room.code,
     phase: room.phase,
     round: room.round,
     maxRounds: MAX_ROUNDS,
     roundSeconds: ROUND_SECONDS,
+    countdownLeft: room.countdownLeft,
     target: room.target,
     scores: room.scores,
+    ready: room.ready,
     players: room.players.map(p => ({
       id: p.id,
       slot: p.slot,
@@ -100,11 +99,12 @@ function publicRoom(room) {
     timeLeft: room.endsAt ? Math.max(0, Math.ceil((room.endsAt - Date.now()) / 1000)) : ROUND_SECONDS,
     results: room.results,
     winner: room.winner,
-    lastMessage: room.lastMessage
+    lastMessage: room.lastMessage,
+    savedToBackend: room.savedToBackend || false
   };
 }
 
-function privateState(room, socketId) {
+function privateState(room, socketId){
   const player = room.players.find(p => p.id === socketId);
   return {
     you: player ? { slot: player.slot, name: player.name } : null,
@@ -113,22 +113,48 @@ function privateState(room, socketId) {
   };
 }
 
-function emitRoom(room) {
-  room.players.forEach(p => {
-    io.to(p.id).emit("state", privateState(room, p.id));
-  });
+function emitRoom(room){
+  room.players.forEach(p => io.to(p.id).emit("state", privateState(room, p.id)));
 }
 
-function startGame(room) {
+function enterInstruction(room){
+  room.phase = "instruction";
+  room.ready = { A: false, B: false };
+  room.lastMessage = "請先閱讀遊戲規則，雙方都按下「我知道了」後開始。";
+  emitRoom(room);
+}
+
+function startCountdown(room){
+  if (room.countdownTimer) clearInterval(room.countdownTimer);
+
+  room.phase = "countdown";
+  room.countdownLeft = COUNTDOWN_SECONDS;
+  room.lastMessage = "雙方已準備，遊戲即將開始。";
+  emitRoom(room);
+
+  room.countdownTimer = setInterval(() => {
+    room.countdownLeft -= 1;
+    if (room.countdownLeft <= 0) {
+      clearInterval(room.countdownTimer);
+      room.countdownTimer = null;
+      startGame(room);
+    } else {
+      emitRoom(room);
+    }
+  }, 1000);
+}
+
+function startGame(room){
   room.round = 1;
   room.scores = { A: 0, B: 0 };
   room.results = [];
   room.winner = null;
+  room.savedToBackend = false;
   room.lastMessage = "遊戲開始！";
   startRound(room);
 }
 
-function startRound(room) {
+function startRound(room){
   if (room.timer) clearTimeout(room.timer);
 
   room.phase = "selecting";
@@ -137,20 +163,19 @@ function startRound(room) {
   room.endsAt = Date.now() + ROUND_SECONDS * 1000;
   room.lastMessage = `第 ${room.round} 回合開始`;
 
+  const sharedTemplate = makeSharedHandTemplate();
+
   room.players.forEach(p => {
-    p.hand = makeHand();
+    p.hand = clone(sharedTemplate);
     p.usedTricks = [];
     p.selectedSecondsLeft = null;
   });
 
-  room.timer = setTimeout(() => {
-    revealRound(room, true);
-  }, ROUND_SECONDS * 1000);
-
+  room.timer = setTimeout(() => revealRound(room, true), ROUND_SECONDS * 1000);
   emitRoom(room);
 }
 
-function revealRound(room, timeout = false) {
+function revealRound(room, timeout = false){
   if (!room || room.phase !== "selecting") return;
 
   if (room.timer) clearTimeout(room.timer);
@@ -217,24 +242,73 @@ function revealRound(room, timeout = false) {
   });
 
   room.lastMessage = resultText;
-
-  if (room.round >= MAX_ROUNDS) {
-    endGame(room);
-  }
-
+  if (room.round >= MAX_ROUNDS) endGame(room);
   emitRoom(room);
 }
 
-function endGame(room) {
-  room.phase = "ended";
-  if (room.scores.A === room.scores.B) {
-    room.winner = "平手";
-  } else {
-    room.winner = room.scores.A > room.scores.B ? "玩家 A" : "玩家 B";
+async function saveRoomToGoogleSheet(room){
+  if (!GOOGLE_SHEET_WEBHOOK) {
+    console.log("GOOGLE_SHEET_WEBHOOK is not set. Skip saving.");
+    return;
+  }
+
+  if (room.savedToBackend) return;
+  room.savedToBackend = true;
+
+  const players = {};
+  room.players.forEach(p => players[p.slot] = p.name);
+
+  const rows = [];
+  const createdAt = new Date().toISOString();
+
+  room.results.forEach(result => {
+    ["A", "B"].forEach(slot => {
+      const data = result[slot];
+
+      rows.push({
+        createdAt,
+        roomCode: room.code,
+        finalWinner: room.winner || "",
+        finalScoreA: room.scores.A,
+        finalScoreB: room.scores.B,
+        round: result.round,
+        playerSlot: slot,
+        playerName: players[slot] || "",
+        targetRGB: result.target.join(","),
+        selectedRGB: data ? data.center.join(",") : "",
+        cardBaseRGB: data ? data.base.join(",") : "",
+        cardStripeRGB: data ? data.stripe.join(",") : "",
+        distance: data && data.distance != null ? Number(data.distance.toFixed(3)) : "",
+        usedTricks: data && data.usedTricks ? data.usedTricks.join("|") : "",
+        selectedSecondsLeft: data && data.selectedSecondsLeft != null ? data.selectedSecondsLeft : "",
+        roundWinner: result.winner || "",
+        roundText: result.resultText || "",
+        timeout: result.timeout ? "TRUE" : "FALSE"
+      });
+    });
+  });
+
+  try {
+    const res = await fetch(GOOGLE_SHEET_WEBHOOK, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({rows})
+    });
+
+    console.log("Google Sheet save status:", res.status);
+  } catch (err) {
+    room.savedToBackend = false;
+    console.error("Google Sheet save failed:", err);
   }
 }
 
-function applyTrick(room, player, effect) {
+function endGame(room){
+  room.phase = "ended";
+  room.winner = room.scores.A === room.scores.B ? "平手" : (room.scores.A > room.scores.B ? "玩家 A" : "玩家 B");
+  saveRoomToGoogleSheet(room);
+}
+
+function applyTrick(room, player, effect){
   const opponent = room.players.find(p => p.slot !== player.slot);
   if (!opponent) return;
 
@@ -277,6 +351,7 @@ io.on("connection", socket => {
       round: 0,
       target: null,
       scores: { A: 0, B: 0 },
+      ready: { A: false, B: false },
       selections: { A: null, B: null },
       players: [{
         id: socket.id,
@@ -290,8 +365,11 @@ io.on("connection", socket => {
       results: [],
       winner: null,
       timer: null,
+      countdownTimer: null,
+      countdownLeft: COUNTDOWN_SECONDS,
       endsAt: null,
-      lastMessage: "等待第二位玩家加入"
+      lastMessage: "等待第二位玩家加入",
+      savedToBackend: false
     };
 
     rooms[roomCode] = room;
@@ -304,15 +382,8 @@ io.on("connection", socket => {
     const roomCode = String(data && data.code ? data.code : "").trim().toUpperCase();
     const room = rooms[roomCode];
 
-    if (!room) {
-      socket.emit("errorMessage", "找不到房間");
-      return;
-    }
-
-    if (room.players.length >= 2) {
-      socket.emit("errorMessage", "房間已滿");
-      return;
-    }
+    if (!room) return socket.emit("errorMessage", "找不到房間");
+    if (room.players.length >= 2) return socket.emit("errorMessage", "房間已滿");
 
     room.players.push({
       id: socket.id,
@@ -325,9 +396,25 @@ io.on("connection", socket => {
     });
 
     socket.join(roomCode);
+    enterInstruction(room);
+  });
 
-    // 第二位玩家加入後自動開始，不需要再按開始
-    startGame(room);
+  socket.on("playerReady", data => {
+    const roomCode = String(data && data.code ? data.code : "").trim().toUpperCase();
+    const room = rooms[roomCode];
+    if (!room || room.phase !== "instruction") return;
+
+    const player = room.players.find(p => p.id === socket.id);
+    if (!player) return;
+
+    room.ready[player.slot] = true;
+    room.lastMessage = `玩家 ${player.slot} 已閱讀規則`;
+
+    if (room.ready.A && room.ready.B) {
+      startCountdown(room);
+    } else {
+      emitRoom(room);
+    }
   });
 
   socket.on("playCard", data => {
@@ -353,11 +440,8 @@ io.on("connection", socket => {
     player.selectedSecondsLeft = Math.max(0, Math.ceil((room.endsAt - Date.now()) / 1000));
     player.hand = player.hand.filter(c => c.id !== card.id);
 
-    if (room.selections.A && room.selections.B) {
-      revealRound(room, false);
-    } else {
-      emitRoom(room);
-    }
+    if (room.selections.A && room.selections.B) revealRound(room, false);
+    else emitRoom(room);
   });
 
   socket.on("nextRound", data => {
@@ -373,18 +457,7 @@ io.on("connection", socket => {
     const roomCode = String(data && data.code ? data.code : "").trim().toUpperCase();
     const room = rooms[roomCode];
     if (!room || room.players.length < 2) return;
-
-    startGame(room);
-  });
-
-  socket.on("disconnect", () => {
-    Object.values(rooms).forEach(room => {
-      const player = room.players.find(p => p.id === socket.id);
-      if (player) {
-        player.connected = false;
-        emitRoom(room);
-      }
-    });
+    enterInstruction(room);
   });
 });
 

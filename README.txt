@@ -1,19 +1,17 @@
-# 誰有好眼力？完整整合版
+# 誰有好眼力？Google Sheet 後台版
 
-功能：
-- 建立房間後直接進等待室
-- 第二位玩家加入後自動開始
-- 手機雙人連線
-- 5 回合，每回合 60 秒
-- 色彩同化卡牌
-- 三種搗亂牌：背景反轉、條紋變細、對比強化
-- 出牌後揭示中心圓真實色
-- 用 RGB 距離判定勝負
-- 遊戲結束顯示研究統計
-- 可下載 CSV
+本版新增：
+- 玩家端不顯示 CSV 下載按鈕。
+- 遊戲結束後，server.js 會自動把研究資料送到 Google Sheet。
+- 如果沒有設定 GOOGLE_SHEET_WEBHOOK，遊戲仍可正常玩，只是不會存後台。
 
-部署：
-1. 解壓縮
-2. 把內容覆蓋到 GitHub 的 bezold-mobile-game 專案
-3. GitHub Desktop commit / push
-4. Render Manual Deploy → Deploy latest commit
+部署步驟：
+1. 覆蓋到 GitHub 專案。
+2. GitHub Desktop commit / push。
+3. Render Deploy latest commit。
+4. 建立 Google Sheet + Apps Script。
+5. 將 Apps Script Web App URL 設到 Render Environment Variable：
+   GOOGLE_SHEET_WEBHOOK = 你的 URL
+6. Render 重新部署一次。
+
+Google Apps Script 程式在 GOOGLE_APPS_SCRIPT.txt。
