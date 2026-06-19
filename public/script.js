@@ -140,9 +140,9 @@ function createCard(card, revealed) {
   name.className = "cardName";
   name.textContent = "";
 
-  const tag = document.createElement("div");
-  tag.className = "rgbTag";
-  tag.textContent = card.center.join(",");
+ // const tag = document.createElement("div");
+ // tag.className = "rgbTag";
+  //tag.textContent = card.center.join(",");
 
   el.appendChild(circle);
 
@@ -153,7 +153,7 @@ function createCard(card, revealed) {
     el.appendChild(stripes);
   }
 
-  el.appendChild(tag);
+ // el.appendChild(tag);
   el.appendChild(name);
   return el;
 }
