@@ -1,26 +1,94 @@
 <!doctype html>
 <html lang="zh-Hant">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>誰有好眼力？手機連線PK</title><link rel="stylesheet" href="style.css"></head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>誰有好眼力？手機連線 PK</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
 <body>
-<main id="app">
-<section id="lobby" class="screen active">
-<h1>誰有好眼力？</h1><p class="subtitle">色彩同化 × 手機連線雙人 PK</p>
-<label>暱稱<input id="nameInput" placeholder="輸入你的名字"></label>
-<button id="createBtn">建立房間</button>
-<div class="joinBox"><input id="roomInput" placeholder="輸入房號" maxlength="4"><button id="joinBtn">加入</button></div>
-<p class="tip">建立房間後會自動進入等待室。第二位玩家加入後，遊戲自動開始。</p><div id="message"></div>
-</section>
-<section id="game" class="screen">
-<div class="topbar"><button id="leaveBtn">離開</button><div>房號：<b id="roomCode">----</b></div><div>你是：<b id="yourSlot">?</b></div></div>
-<div id="waitingPanel" class="panel"><h2>等待另一位玩家加入</h2><p id="playersText"></p><p>把房號給同學，對方加入後會直接開始。</p></div>
-<div id="gamePanel" class="hidden">
-<div class="roundbar"><div>回合 <b id="roundText">1/5</b></div><div>倒數 <b id="timerText">60</b>s</div><div>A <b id="scoreA">0</b> : <b id="scoreB">0</b> B</div></div>
-<div class="target"><div id="targetSwatch"></div><div><div class="small">目標顏色</div><div id="targetText">RGB(---)</div></div></div>
-<div id="status" class="status"></div><h3>你的手牌</h3><div id="hand" class="hand"></div>
-<section id="revealPanel" class="panel hidden"><h2>本回合結果</h2><div id="resultText"></div><div id="revealCards" class="revealCards"></div><button id="nextBtn">下一回合</button></section>
-<section id="endPanel" class="panel hidden"><h2>遊戲結束</h2><div id="winnerText"></div><div id="researchText"></div><button id="downloadCsvBtn">下載研究資料 CSV</button><button id="restartBtn">重新開始同房間</button></section>
-</div>
-</section>
-</main>
-<script src="/socket.io/socket.io.js"></script><script src="script.js"></script>
-</body></html>
+  <main id="app">
+    <section id="lobby" class="screen active">
+      <h1>誰有好眼力？</h1>
+      <p class="subtitle">貝佐德效應 × 色彩同化 × 雙人 PK</p>
+
+      <div class="cardPanel">
+        <label>暱稱
+          <input id="nameInput" placeholder="輸入你的名字" />
+        </label>
+
+        <button id="createBtn">建立房間</button>
+
+        <div class="joinBox">
+          <input id="roomInput" placeholder="輸入房號" maxlength="4" />
+          <button id="joinBtn">加入</button>
+        </div>
+
+        <p class="tip">建立房間後會直接進入等待室；第二位玩家加入後，遊戲會自動開始。</p>
+        <div id="message"></div>
+      </div>
+
+      <section class="rules">
+        <h2>遊戲規則</h2>
+        <p>系統每回合會隨機抽出一個目標 RGB 顏色。玩家需要在色彩同化干擾下，選出中心圓最接近目標色的卡牌。</p>
+        <p>雙方出牌後，系統會移除背景與條紋，只留下中心圓真實色，並用 RGB 距離判定勝負。</p>
+        <p>搗亂牌會改變對方卡牌的背景條紋條件，但不會改變中心圓真實 RGB。</p>
+      </section>
+    </section>
+
+    <section id="game" class="screen">
+      <div class="topbar">
+        <button id="leaveBtn">離開</button>
+        <div>房號：<b id="roomCode">----</b></div>
+        <div>你是：<b id="yourSlot">?</b></div>
+      </div>
+
+      <section id="waitingPanel" class="panel">
+        <h2>等待另一位玩家加入</h2>
+        <p id="playersText"></p>
+        <p>把房號給同學，對方加入後會自動開始。</p>
+      </section>
+
+      <section id="gamePanel" class="hidden">
+        <div class="roundbar">
+          <div>回合 <b id="roundText">1/5</b></div>
+          <div>倒數 <b id="timerText">60</b>s</div>
+          <div>A <b id="scoreA">0</b> : <b id="scoreB">0</b> B</div>
+        </div>
+
+        <section class="target panel">
+          <div id="targetSwatch"></div>
+          <div>
+            <div class="small">目標顏色</div>
+            <div id="targetText">RGB(---)</div>
+          </div>
+        </section>
+
+        <div id="status" class="status"></div>
+        <div id="messageBar" class="messageBar"></div>
+
+        <h3>你的手牌</h3>
+        <div id="hand" class="hand"></div>
+
+        <section id="revealPanel" class="panel hidden">
+          <h2>本回合結果</h2>
+          <div id="resultText"></div>
+          <div id="revealCards" class="revealCards"></div>
+          <button id="nextBtn">下一回合</button>
+        </section>
+
+        <section id="endPanel" class="panel hidden">
+          <h2>遊戲結束</h2>
+          <div id="winnerText"></div>
+          <div id="researchText"></div>
+          <button id="downloadCsvBtn">下載研究資料 CSV</button>
+          <button id="restartBtn">重新開始同房間</button>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
