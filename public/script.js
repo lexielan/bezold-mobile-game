@@ -52,7 +52,7 @@ function rgbCss(rgb) {
 }
 
 function rgbText(rgb) {
-  return `RGB(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  return "";
 }
 
 function render() {
@@ -138,7 +138,7 @@ function createCard(card, revealed) {
 
   const name = document.createElement("div");
   name.className = "cardName";
-  name.textContent = revealed ? rgbText(card.center) : card.name;
+  name.textContent = "";
 
   const tag = document.createElement("div");
   tag.className = "rgbTag";
