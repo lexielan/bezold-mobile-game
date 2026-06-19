@@ -1,23 +1,21 @@
 const express = require("express");
 const app = express();
-
 const http = require("http").createServer(app);
-
-const io = require("socket.io")(http, {
-  cors: {
-    origin: "*"
-  }
-});
+const io = require("socket.io")(http);
 
 app.use(express.static("./"));
 
 let rooms = {};
 
-io.on("connection", (socket) => {
+function makeRoomCode() {
+  return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
 
+io.on("connection", (socket) => {
   console.log("玩家連線:", socket.id);
 
-  socket.on("createRoom", (roomCode) => {
+  socket.on("createRoom", (data) => {
+    const roomCode = makeRoomCode();
 
     rooms[roomCode] = {
       players: [socket.id]
@@ -25,13 +23,13 @@ io.on("connection", (socket) => {
 
     socket.join(roomCode);
 
-    socket.emit("roomCreated", roomCode);
+    socket.emit("created", { code: roomCode });
 
     console.log("建立房間:", roomCode);
-
   });
 
-  socket.on("joinRoom", (roomCode) => {
+  socket.on("joinRoom", (data) => {
+    const roomCode = data.code.toUpperCase();
 
     if (!rooms[roomCode]) {
       socket.emit("errorMessage", "房間不存在");
@@ -44,33 +42,21 @@ io.on("connection", (socket) => {
     }
 
     rooms[roomCode].players.push(socket.id);
-
     socket.join(roomCode);
 
-    io.to(roomCode).emit("gameStart");
+    io.to(roomCode).emit("state", {
+      room: {
+        code: roomCode,
+        players: rooms[roomCode].players
+      }
+    });
 
-    console.log("玩家加入:", roomCode);
-
+    console.log("玩家加入房間:", roomCode);
   });
-
-  socket.on("sendGameData", (data) => {
-
-    socket.to(data.roomCode).emit("receiveGameData", data);
-
-  });
-
-  socket.on("disconnect", () => {
-
-    console.log("玩家離線");
-
-  });
-
 });
 
 const PORT = process.env.PORT || 3000;
 
 http.listen(PORT, () => {
-
   console.log("伺服器啟動:", PORT);
-
 });
