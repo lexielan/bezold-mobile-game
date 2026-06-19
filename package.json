@@ -1,0 +1,25 @@
+{
+  "name": "bezold-mobile-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lexielan/bezold-mobile-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lexielan/bezold-mobile-game/issues"
+  },
+  "homepage": "https://github.com/lexielan/bezold-mobile-game#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}
