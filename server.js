@@ -187,35 +187,70 @@ function revealRound(room, timeout = false){
   const distA = cardA ? rgbDistance(room.target, cardA.center) : null;
   const distB = cardB ? rgbDistance(room.target, cardB.center) : null;
 
-  let winner = null;
-  let resultText = "";
+ let winner = null;
+let resultText = "";
 
-  if (cardA && cardB) {
-    if (Math.abs(distA - distB) < 0.001) {
-      resultText = "本回合平手";
-    } else if (distA < distB) {
+const pA = room.players.find(p => p.slot === "A");
+const pB = room.players.find(p => p.slot === "B");
+
+if (cardA && cardB) {
+
+  // 距離相同 → 比誰先出牌
+  if (Math.abs(distA - distB) < 0.001) {
+
+    const timeA = pA ? pA.selectedSecondsLeft : -1;
+    const timeB = pB ? pB.selectedSecondsLeft : -1;
+
+    if (timeA > timeB) {
+
       room.scores.A += 1;
       winner = "A";
-      resultText = "玩家 A 得分";
-    } else {
+      resultText = "雙方距離相同，玩家 A 較早出牌，因此玩家 A 得分";
+
+    } else if (timeB > timeA) {
+
       room.scores.B += 1;
       winner = "B";
-      resultText = "玩家 B 得分";
+      resultText = "雙方距離相同，玩家 B 較早出牌，因此玩家 B 得分";
+
+    } else {
+
+      resultText = "本回合平手";
+
     }
-  } else if (cardA && !cardB) {
+
+  } else if (distA < distB) {
+
     room.scores.A += 1;
     winner = "A";
-    resultText = "玩家 B 未出牌，玩家 A 得分";
-  } else if (!cardA && cardB) {
+    resultText = "玩家 A 得分";
+
+  } else {
+
     room.scores.B += 1;
     winner = "B";
-    resultText = "玩家 A 未出牌，玩家 B 得分";
-  } else {
-    resultText = "雙方皆未出牌，本回合無人得分";
+    resultText = "玩家 B 得分";
+
   }
 
-  const pA = room.players.find(p => p.slot === "A");
-  const pB = room.players.find(p => p.slot === "B");
+} else if (cardA && !cardB) {
+
+  room.scores.A += 1;
+  winner = "A";
+  resultText = "玩家 B 未出牌，玩家 A 得分";
+
+} else if (!cardA && cardB) {
+
+  room.scores.B += 1;
+  winner = "B";
+  resultText = "玩家 A 未出牌，玩家 B 得分";
+
+} else {
+
+  resultText = "雙方皆未出牌，本回合無人得分";
+
+}
+
 
   room.results.push({
     round: room.round,
