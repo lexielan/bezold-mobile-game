@@ -50,3 +50,8 @@ button{background:#ffdf55;color:#10244a;font-weight:900}
   .hand{grid-template-columns:repeat(6,1fr)}
   :root{--circle-size:220px;--card-height:300px}
 }
+
+
+.gameCard:not(.trickCard) .cardName{
+  display:none;
+}

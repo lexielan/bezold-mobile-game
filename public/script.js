@@ -73,9 +73,9 @@ function render(){
 
 function renderStatus(room){
   if(room.phase==="selecting"){
-    $("status").textContent=room.selections[current.you.slot]?"你已出牌，等待對方":"可以搶先使用功能牌影響對方!";
+    $("status").textContent=room.selections[current.you.slot]?"你已出牌，等待對方":"可以搶先使用「功能牌」搗亂對方!";
   }else if(room.phase==="revealed"){
-    $("status").textContent="已揭示正確答案";
+    $("status").textContent="揭示正確答案";
   }else if(room.phase==="ended"){
     $("status").textContent="遊戲結束";
   }
@@ -109,6 +109,7 @@ function createCard(card,revealed,isCorrectCard){
   if(isCorrectCard) el.classList.add("correct");
 
   if(card.type==="trick"){
+    el.classList.add("trickCard");
     el.style.background="repeating-linear-gradient(90deg,#ffdf55 0 12px,#7b3cff 12px 24px)";
     el.innerHTML=`<div class="trickBadge">功能牌</div><div class="cardName">${card.name}</div>`;
     return el;
