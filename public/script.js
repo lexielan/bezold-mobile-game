@@ -129,7 +129,7 @@ function createCard(card,revealed,isCorrectCard){
   if(!revealed){
     const stripes=document.createElement("div");
     stripes.className="stripes";
-    stripes.style.background=stripeBg(card.stripe,card.lineMode);
+    stripes.style.background=stripeBg(card.stripe,card.stripeWidth||3,card.stripeGap||3);
     el.appendChild(stripes);
   }
 
@@ -137,10 +137,11 @@ function createCard(card,revealed,isCorrectCard){
   return el;
 }
 
-function stripeBg(stripe,lineMode){
-  const w=lineMode==="thin"?6:12;
-  const g=lineMode==="thin"?14:24;
-  return`repeating-linear-gradient(90deg,${rgbCss(stripe)} 0 ${w}px,transparent ${w}px ${g}px)`;
+function stripeBg(stripe,width,gap){
+  const w=Number(width)||3;
+  const g=Number(gap)||3;
+  const period=w+g;
+  return`repeating-linear-gradient(90deg,${rgbCss(stripe)} 0 ${w}px,transparent ${w}px ${period}px)`;
 }
 
 function renderReveal(room){
@@ -168,6 +169,8 @@ function renderReveal(room){
       center:r.correctCard.center,
       base:[247,247,247],
       stripe:[0,0,0],
+      stripeWidth:3,
+      stripeGap:3,
       name:"正確答案"
     },true,true));
   }
@@ -186,6 +189,8 @@ function renderReveal(room){
         center:data.center,
         base:[247,247,247],
         stripe:[0,0,0],
+        stripeWidth:3,
+        stripeGap:3,
         name:"玩家選擇"
       },true,data.isCorrect));
     }else{

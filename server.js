@@ -11,15 +11,23 @@ const ROUND_SECONDS = 60;
 const COUNTDOWN_SECONDS = 3;
 const GOOGLE_SHEET_WEBHOOK = process.env.GOOGLE_SHEET_WEBHOOK || "";
 
-// 6 個候選圓：每回合從這 6 個選出 5 張普通牌 + 1 張功能牌。
-// 5 張普通牌中一定有 1 張正確答案，另外 4 張從剩下 5 個顏色隨機抽，且不重複。
+// 6 個候選圓：每回合 5 張普通牌 + 1 張功能牌。
+// 5 張普通牌中一定有 1 張正確答案，另外 4 張由其他 5 個圓隨機抽，且不重複。
 const colorPool = [
-  { name:"橘紅", hex:"#FF6400", center:[255,100,0], base:[255,220,60], stripe:[30,20,20] },
-  { name:"純紅", hex:"#FF0000", center:[255,0,0], base:[80,210,150], stripe:[30,20,20] },
-  { name:"焦橘", hex:"#D66400", center:[214,100,0], base:[80,130,230], stripe:[30,20,20] },
-  { name:"深紅", hex:"#C80000", center:[200,0,0], base:[90,210,160], stripe:[30,20,20] },
-  { name:"亮橘", hex:"#FF7D00", center:[255,155,0], base:[40,190,220], stripe:[30,20,20] },
-  { name:"珊瑚紅", hex:"#FF4040", center:[255,64,64], base:[255,225,40], stripe:[30,20,20] }
+  { name:"橘紅", hex:"#FF6400", center:[255,100,0] },
+  { name:"純紅", hex:"#FF0000", center:[255,0,0] },
+  { name:"焦橘", hex:"#D66400", center:[214,100,0] },
+  { name:"深紅", hex:"#C80000", center:[200,0,0] },
+  { name:"亮橘", hex:"#FF7D00", center:[255,155,0] },
+  { name:"珊瑚紅", hex:"#FF4040", center:[255,64,64] }
+];
+
+// 底色與線條色只從這三組搭配中抽。
+// 每張普通牌會隨機使用其中一組，功能牌會交換對方普通牌的 base / stripe。
+const visualPairs = [
+  { name:"紫綠組", base:[176,32,255], stripe:[127,255,0] },     // #B020FF / #7FFF00
+  { name:"藍黃組", base:[0,0,255], stripe:[255,255,0] },        // #0000FF / #FFFF00
+  { name:"青粉組", base:[100,220,255], stripe:[255,170,140] }   // #64DCFF / #FFAA8C
 ];
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
@@ -49,20 +57,29 @@ function rgbString(rgb){
 function makeRoundHand(){
   const pool = shuffle(clone(colorPool));
 
-  // 先選出本回合正確答案
   const correctSource = pool[0];
-
-  // 從其他 5 個顏色中隨機抽 4 個當干擾選項
   const distractors = shuffle(pool.slice(1)).slice(0, 4);
 
-  // 5 張普通牌：1 張答案 + 4 張干擾，全部不重複
-  const normalCards = shuffle([correctSource, ...distractors]).map(card => ({
-    ...card,
-    id: makeId(),
-    type: "normal",
-    lineMode: "normal",
-    trickEffect: null
-  }));
+  const selectedColors = shuffle([correctSource, ...distractors]);
+  const shuffledVisualPairs = shuffle(clone(visualPairs));
+
+  const normalCards = selectedColors.map((card, index) => {
+    const pair = shuffledVisualPairs[index % shuffledVisualPairs.length];
+
+    return {
+      ...card,
+      id: makeId(),
+      type: "normal",
+      base: pair.base,
+      stripe: pair.stripe,
+      visualPair: pair.name,
+      stripeWidth: 3,
+      stripeGap: 3,
+      circleDiameter: 260,
+      lineMode: "custom",
+      trickEffect: null
+    };
+  });
 
   const correctCard = normalCards.find(card =>
     card.center[0] === correctSource.center[0] &&
@@ -263,6 +280,10 @@ function revealRound(room, timeout = false){
       center: cardA.center,
       base: cardA.base,
       stripe: cardA.stripe,
+      visualPair: cardA.visualPair,
+      stripeWidth: cardA.stripeWidth,
+      stripeGap: cardA.stripeGap,
+      circleDiameter: cardA.circleDiameter,
       distance: distA,
       isCorrect: isCorrectA,
       usedTricks: pA ? pA.usedTricks : [],
@@ -272,6 +293,10 @@ function revealRound(room, timeout = false){
       center: cardB.center,
       base: cardB.base,
       stripe: cardB.stripe,
+      visualPair: cardB.visualPair,
+      stripeWidth: cardB.stripeWidth,
+      stripeGap: cardB.stripeGap,
+      circleDiameter: cardB.circleDiameter,
       distance: distB,
       isCorrect: isCorrectB,
       usedTricks: pB ? pB.usedTricks : [],
@@ -321,6 +346,10 @@ async function saveRoomToGoogleSheet(room){
         selectedRGB: data ? rgbString(data.center) : "",
         cardBaseRGB: data ? rgbString(data.base) : "",
         cardStripeRGB: data ? rgbString(data.stripe) : "",
+        visualPair: data ? data.visualPair : "",
+        stripeWidth: data ? data.stripeWidth : "",
+        stripeGap: data ? data.stripeGap : "",
+        circleDiameter: data ? data.circleDiameter : "",
         distance: data && data.distance != null ? Number(data.distance.toFixed(3)) : "",
         isCorrect: data ? (data.isCorrect ? "TRUE" : "FALSE") : "",
         usedTricks: data && data.usedTricks ? data.usedTricks.join("|") : "",
