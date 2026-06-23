@@ -126,7 +126,7 @@ function createCard(card,revealed,isCorrectCard){
 
   el.appendChild(circle);
 
-  if(!revealed){
+  if(card.type==="trick"){
     const stripes=document.createElement("div");
     stripes.className="stripes";
     stripes.style.background=stripeBg(card.stripe,card.stripeWidth||3,card.stripeGap||3);
