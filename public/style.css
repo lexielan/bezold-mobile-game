@@ -35,5 +35,5 @@ button{background:#ffdf55;color:#10244a;font-weight:900}
 .revealItem h3{margin-bottom:8px}
 .dataTable{width:100%;border-collapse:collapse;margin-top:12px}
 .dataTable td,.dataTable th{border:1px solid rgba(255,255,255,.3);padding:8px}
-@media(min-width:720px){.hand{grid-template-columns:repeat(5,1fr)}.revealCards{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:1020px){.gameCard{height:190px}}
+@media(min-width:720px){.hand{grid-template-columns:repeat(3,1fr)}.revealCards{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1020px){.hand{grid-template-columns:repeat(6,1fr)}.gameCard{height:190px}}

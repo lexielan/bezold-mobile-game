@@ -11,17 +11,15 @@ const ROUND_SECONDS = 60;
 const COUNTDOWN_SECONDS = 3;
 const GOOGLE_SHEET_WEBHOOK = process.env.GOOGLE_SHEET_WEBHOOK || "";
 
-const cardPool = [
-  { name:"赤紅", center:[255,0,0], base:[255,220,60], stripe:[30,20,20] },
-  { name:"深紅", center:[180,0,0], base:[80,210,150], stripe:[30,20,20] },
-  { name:"洋紅", center:[255,0,130], base:[90,210,150], stripe:[30,20,20] },
-  { name:"橘紅", center:[255,70,0], base:[80,130,230], stripe:[30,20,20] },
-  { name:"亮紅", center:[240,40,40], base:[80,210,230], stripe:[30,20,20] },
-  { name:"酒紅", center:[210,20,80], base:[255,210,80], stripe:[30,20,20] },
-  { name:"暗莓紅", center:[150,0,40], base:[90,210,160], stripe:[30,20,20] },
-  { name:"暖橘紅", center:[255,100,30], base:[70,130,230], stripe:[30,20,20] },
-  { name:"偏粉紅", center:[255,35,110], base:[40,190,220], stripe:[30,20,20] },
-  { name:"焦糖紅", center:[220,60,20], base:[255,225,40], stripe:[30,20,20] }
+// 6 個候選圓：每回合從這 6 個選出 5 張普通牌 + 1 張功能牌。
+// 5 張普通牌中一定有 1 張正確答案，另外 4 張從剩下 5 個顏色隨機抽，且不重複。
+const colorPool = [
+  { name:"橘紅", hex:"#FF6400", center:[255,100,0], base:[255,220,60], stripe:[30,20,20] },
+  { name:"純紅", hex:"#FF0000", center:[255,0,0], base:[80,210,150], stripe:[30,20,20] },
+  { name:"焦橘", hex:"#D66400", center:[214,100,0], base:[80,130,230], stripe:[30,20,20] },
+  { name:"深紅", hex:"#C80000", center:[200,0,0], base:[90,210,160], stripe:[30,20,20] },
+  { name:"亮橘", hex:"#FF7D00", center:[255,155,0], base:[40,190,220], stripe:[30,20,20] },
+  { name:"珊瑚紅", hex:"#FF4040", center:[255,64,64], base:[255,225,40], stripe:[30,20,20] }
 ];
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
@@ -48,15 +46,29 @@ function rgbString(rgb){
   return rgb ? rgb.join(",") : "";
 }
 
-function makeSharedHandTemplate(){
-  const shuffledPool = shuffle(clone(cardPool));
-  const normalCards = shuffledPool.slice(0, 4).map(card => ({
+function makeRoundHand(){
+  const pool = shuffle(clone(colorPool));
+
+  // 先選出本回合正確答案
+  const correctSource = pool[0];
+
+  // 從其他 5 個顏色中隨機抽 4 個當干擾選項
+  const distractors = shuffle(pool.slice(1)).slice(0, 4);
+
+  // 5 張普通牌：1 張答案 + 4 張干擾，全部不重複
+  const normalCards = shuffle([correctSource, ...distractors]).map(card => ({
     ...card,
     id: makeId(),
     type: "normal",
     lineMode: "normal",
     trickEffect: null
   }));
+
+  const correctCard = normalCards.find(card =>
+    card.center[0] === correctSource.center[0] &&
+    card.center[1] === correctSource.center[1] &&
+    card.center[2] === correctSource.center[2]
+  );
 
   const trickCard = {
     id: makeId(),
@@ -65,7 +77,10 @@ function makeSharedHandTemplate(){
     name: "底色線條交換"
   };
 
-  return [...normalCards, trickCard];
+  return {
+    handTemplate: [...normalCards, trickCard],
+    correctCard: clone(correctCard)
+  };
 }
 
 function publicRoom(room){
@@ -157,16 +172,13 @@ function startRound(room){
   room.endsAt = Date.now() + ROUND_SECONDS * 1000;
   room.lastMessage = `第 ${room.round} 回合開始`;
 
-  const sharedTemplate = makeSharedHandTemplate();
-  const normalCards = sharedTemplate.filter(card => card.type === "normal");
-  const correctCard = clone(normalCards[Math.floor(Math.random() * normalCards.length)]);
-
-  room.correctCardId = correctCard.id;
-  room.correctCard = correctCard;
-  room.target = correctCard.center;
+  const roundData = makeRoundHand();
+  room.correctCardId = roundData.correctCard.id;
+  room.correctCard = roundData.correctCard;
+  room.target = roundData.correctCard.center;
 
   room.players.forEach(p => {
-    p.hand = clone(sharedTemplate);
+    p.hand = clone(roundData.handTemplate);
     p.usedTricks = [];
     p.selectedSecondsLeft = null;
   });

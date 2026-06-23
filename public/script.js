@@ -149,7 +149,12 @@ function renderReveal(room){
 
   const r=room.results[room.results.length-1];
 
-  $("resultText").innerHTML=`<b>${r.resultText}</b>`;
+  $("resultText").innerHTML=`
+    正確答案：<b>${r.correctCard ? rgbText(r.correctCard.center) : "無"}</b><br>
+    玩家 A：${r.A ? `${rgbText(r.A.center)}｜RGB差距 ${r.A.distance.toFixed(1)}｜${r.A.isCorrect ? "答對" : "答錯"}` : "未出牌"}<br>
+    玩家 B：${r.B ? `${rgbText(r.B.center)}｜RGB差距 ${r.B.distance.toFixed(1)}｜${r.B.isCorrect ? "答對" : "答錯"}` : "未出牌"}<br>
+    <b>${r.resultText}</b>
+  `;
 
   const box=$("revealCards");
   box.innerHTML="";
