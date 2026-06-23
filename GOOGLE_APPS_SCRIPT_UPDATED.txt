@@ -2,11 +2,29 @@ function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const payload = JSON.parse(e.postData.contents);
   const rows = payload.rows || [];
+
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(["資料時間","房號","最終贏家","A總分","B總分","回合","玩家代號","玩家名稱","目標RGB","正確答案RGB","玩家選擇RGB","RGB誤差距離","是否答對","花費秒數","剩餘秒數","是否出牌","是否使用功能牌","使用的功能牌","本回合贏家","本回合結果","是否超時","卡牌底色RGB","卡牌線條RGB"]);
+    sheet.appendRow([
+      "資料時間","房號","最終贏家","A總分","B總分","回合",
+      "玩家代號","玩家名稱","目標RGB","正確答案RGB","玩家選擇RGB",
+      "RGB誤差距離","是否答對","花費秒數","剩餘秒數","是否出牌",
+      "是否使用功能牌","使用的功能牌","本回合贏家","本回合結果",
+      "是否超時","卡牌底色RGB","卡牌線條RGB"
+    ]);
   }
+
   rows.forEach(function(row) {
-    sheet.appendRow([row.createdAt,row.roomCode,row.finalWinner,row.finalScoreA,row.finalScoreB,row.round,row.playerSlot,row.playerName,row.targetRGB,row.correctRGB,row.selectedRGB,row.distance,row.isCorrect,row.spentSeconds,row.selectedSecondsLeft,row.selectedRGB ? "有出牌" : "未出牌",row.usedTricks ? "有" : "無",row.usedTricks,row.roundWinner,row.roundText,row.timeout,row.cardBaseRGB,row.cardStripeRGB]);
+    sheet.appendRow([
+      row.createdAt,row.roomCode,row.finalWinner,row.finalScoreA,row.finalScoreB,
+      row.round,row.playerSlot,row.playerName,row.targetRGB,row.correctRGB,
+      row.selectedRGB,row.distance,row.isCorrect,row.spentSeconds,row.selectedSecondsLeft,
+      row.selectedRGB ? "有出牌" : "未出牌",
+      row.usedTricks ? "有" : "無",
+      row.usedTricks,row.roundWinner,row.roundText,row.timeout,row.cardBaseRGB,row.cardStripeRGB
+    ]);
   });
-  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
 }

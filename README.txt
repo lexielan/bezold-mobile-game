@@ -1,1 +1,14 @@
-正確答案版：覆蓋專案後 commit / push / Render deploy。Google Apps Script 請改貼 GOOGLE_APPS_SCRIPT_UPDATED.txt。
+# 乾淨版：無 RGB / 無 ??? / 無結果細節文字
+
+本版已移除：
+- 卡牌右上角 RGB / ???
+- 結果下方的「正確 RGB」
+- 結果下方的「選擇 RGB」
+- 結果下方的「RGB 差距」
+- 結果下方的「答對/答錯」文字
+
+仍保留：
+- 正確答案卡牌會用黃色框標示
+- 玩家選到正確答案時，玩家卡牌會用黃色框標示
+- 結果只顯示一句判定文字
+- Google Sheet 後台仍完整記錄 RGB、差距、是否答對、花費秒數
