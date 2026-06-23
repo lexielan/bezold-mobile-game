@@ -62,7 +62,7 @@ function render(){
 
   if(room.target){
     $("targetSwatch").style.background=rgbCss(room.target);
-    $("targetText").textContent="請找出真正正確答案";
+    $("targetText").textContent="請找出正確答案";
   }
 
   renderStatus(room);
@@ -73,9 +73,9 @@ function render(){
 
 function renderStatus(room){
   if(room.phase==="selecting"){
-    $("status").textContent=room.selections[current.you.slot]?"你已出牌，等待對方":"請選出正確答案，或先使用功能牌";
+    $("status").textContent=room.selections[current.you.slot]?"你已出牌，等待對方":"可先使用「功能牌」搗亂對方!";
   }else if(room.phase==="revealed"){
-    $("status").textContent="已揭示正確答案";
+    $("status").textContent="揭示正確答案";
   }else if(room.phase==="ended"){
     $("status").textContent="遊戲結束";
   }

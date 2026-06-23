@@ -10,7 +10,7 @@
   <main id="app">
     <section id="lobby" class="screen active">
       <h1>誰有好眼力？</h1>
-      <p class="subtitle">色彩同化 × 正確答案辨識</p>
+      <p class="subtitle">色彩同化 × 辨識正確顏色</p>
       <div class="cardPanel">
         <label>暱稱<input id="nameInput" placeholder="輸入你的名字"/></label>
         <button id="createBtn">建立房間</button>
@@ -36,12 +36,9 @@
 
       <section id="instructionPanel" class="panel hidden">
         <h2>遊戲規則</h2>
-        <p>1. 每回合從 6 個候選顏色中產生 5 張普通牌。</p>
-        <p>2. 5 張普通牌中一定有 1 張正確答案，其餘 4 張由另外 5 個顏色隨機抽出，且不重複。</p>
-        <p>3. 底色與線條色只會從三組指定搭配中出現：紫綠、藍黃、青粉。</p>
-        <p>4. 線條寬度 3px、間距 3px；圓直徑 260px。</p>
-        <p>5. 功能牌固定在手牌最後方，效果為「對方卡牌底色與線條顏色交換」。</p>
-        <p>6. 每回合 60 秒，共 5 回合。選到正確答案者得分；若雙方都選對，先出牌者得分。</p>
+        <p>1. 在色彩同化的影響下，選出指定顏色的卡牌。</p>
+        <p>2. 可以先使用「功能牌」，功能牌的效果為「對方卡牌底色與線條顏色交換」可影響對方的視覺效果。</p>
+        <p>3. 每回合 60 秒，共 5 回合。選到正確答案者得分；若雙方都選對，先出牌者得分。</p>
         <div id="readyStatus" class="readyStatus">等待雙方確認...</div>
         <button id="readyBtn">我知道了</button>
       </section>
@@ -62,7 +59,7 @@
           <div id="targetSwatch"></div>
           <div>
             <div class="small">目標顏色</div>
-            <div id="targetText">請找出真正正確答案</div>
+            <div id="targetText">請找出正確答案</div>
           </div>
         </section>
 
@@ -83,7 +80,7 @@
           <h2>遊戲結束</h2>
           <div id="winnerText"></div>
           <div id="researchText"></div>
-          <button id="restartBtn">重新開始同房間</button>
+          <button id="restartBtn">再玩一次</button>
         </section>
       </section>
     </section>
