@@ -1,7 +1,7 @@
 *{box-sizing:border-box}
 :root{
-  --circle-size:118px;
-  --card-height:210px;
+  --circle-size:120px;
+  --card-height:170px;
 }
 body{margin:0;font-family:"Microsoft JhengHei",system-ui,sans-serif;background:radial-gradient(circle at top,rgba(255,255,255,.08),transparent 35%),#132247;color:white}
 .screen{display:none;min-height:100vh;padding:20px;max-width:1500px;margin:auto}
@@ -27,7 +27,7 @@ button{background:#ffdf55;color:#10244a;font-weight:900}
 .status,.messageBar,.readyStatus{text-align:center;color:#ffdf55;font-size:20px;font-weight:900;min-height:30px}
 .countdownText{text-align:center;font-size:92px;font-weight:1000;color:#ffdf55}
 .hand{display:grid;grid-template-columns:repeat(1,1fr);gap:18px}
-.gameCard{height:var(--card-height);position:relative;border-radius:22px;overflow:hidden;border:4px solid white;background:#f7f7f7;box-shadow:0 8px 16px rgba(0,0,0,.28)}
+.gameCard{width:125px;height:var(--card-height);position:relative;border-radius:22px;overflow:hidden;border:4px solid white;background:#f7f7f7;box-shadow:0 8px 16px rgba(0,0,0,.28)}
 .gameCard.disabled{opacity:.45;pointer-events:none}
 .gameCard.correct{border-color:#ffdf55;box-shadow:0 0 0 6px rgba(255,223,85,.25)}
 .circle{position:absolute;z-index:2;width:var(--circle-size);height:var(--circle-size);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
@@ -48,7 +48,7 @@ button{background:#ffdf55;color:#10244a;font-weight:900}
 }
 @media(min-width:1480px){
   .hand{grid-template-columns:repeat(6,1fr)}
-  :root{--circle-size:118px;--card-height:210px}
+  :root{--circle-size:120px;--card-height:170px}
 }
 
 
