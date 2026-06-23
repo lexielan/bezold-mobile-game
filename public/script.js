@@ -62,7 +62,7 @@ function render(){
 
   if(room.target){
     $("targetSwatch").style.background=rgbCss(room.target);
-    $("targetText").textContent="請找出真正正確答案";
+    $("targetText").textContent="請找出正確答案";
   }
 
   renderStatus(room);
@@ -73,7 +73,7 @@ function render(){
 
 function renderStatus(room){
   if(room.phase==="selecting"){
-    $("status").textContent=room.selections[current.you.slot]?"你已出牌，等待對方":"請選出正確答案，或先使用功能牌";
+    $("status").textContent=room.selections[current.you.slot]?"你已出牌，等待對方":"可以搶先使用功能牌影響對方!";
   }else if(room.phase==="revealed"){
     $("status").textContent="已揭示正確答案";
   }else if(room.phase==="ended"){
@@ -126,7 +126,7 @@ function createCard(card,revealed,isCorrectCard){
 
   el.appendChild(circle);
 
-  if(card.type==="trick"){
+  if(!revealed){
     const stripes=document.createElement("div");
     stripes.className="stripes";
     stripes.style.background=stripeBg(card.stripe,card.stripeWidth||3,card.stripeGap||3);
