@@ -1,7 +1,7 @@
 *{box-sizing:border-box}
 :root{
-  --circle-size:170px;
-  --card-height:250px;
+  --circle-size:118px;
+  --card-height:210px;
 }
 body{margin:0;font-family:"Microsoft JhengHei",system-ui,sans-serif;background:radial-gradient(circle at top,rgba(255,255,255,.08),transparent 35%),#132247;color:white}
 .screen{display:none;min-height:100vh;padding:20px;max-width:1500px;margin:auto}
@@ -48,7 +48,7 @@ button{background:#ffdf55;color:#10244a;font-weight:900}
 }
 @media(min-width:1480px){
   .hand{grid-template-columns:repeat(6,1fr)}
-  :root{--circle-size:190px;--card-height:270px}
+  :root{--circle-size:118px;--card-height:210px}
 }
 
 
