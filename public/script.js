@@ -231,7 +231,7 @@ function buildResearch(results){
   const rate=a=>a.length?((a.reduce((x,y)=>x+y,0)/a.length)*100).toFixed(1)+"%":"無資料";
 
   return `<table class="dataTable">
-    <tr><th>研究指標</th><th>結果</th></tr>
+    <tr><th>玩家 A 與 玩家 B 之色彩知覺表現指標</th><th>結果</th></tr>
     <tr><td>平均 RGB 誤差距離</td><td>${avg(ds)}</td></tr>
     <tr><td>正確率</td><td>${rate(corrects)}</td></tr>
     <tr><td>平均花費秒數</td><td>${avg(times)}</td></tr>
